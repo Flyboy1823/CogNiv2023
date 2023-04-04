@@ -1,4 +1,4 @@
-import argparse, os, math, threading
+import argparse
 from Nav_Modules.Nav_Geometry import *
 from Nav_Modules.Nav_MotionPlanner import *
 from Nav_Modules.Nav_Plotter import *
@@ -183,16 +183,13 @@ def main():
         start = [start1, start2]
         samples, goal1_nodes, goal2_nodes = Create_Samples(map, start1, start2, obs, goals1, goals2, N_samples=N_samples, N_knn=5)
         roadmap, PRM_graph, updated_obs = Create_Roadmap(samples, obs, goals1, goals2, N_knn=5)
-        new_graph, trajectories1, trajectories2= PRM_Solve(start, goals1, goals2, samples, goal1_nodes, goal2_nodes, roadmap, PRM_graph, obs, updated_obs)
-        #final_trajectory = TaskPlanner(new_graph, obs = updated_obs, save_pddl=save_pddl, output_path=path).GetFinalTrajectory()
-        #if final_trajectory == None:
-        #    return
+        new_graph, trajectories1, trajectories2= PRM_Solve(start, goals1, goals2, samples, goal1_nodes, goal2_nodes, roadmap, PRM_graph)
+        final_trajectory = TaskPlanner(new_graph, save_pddl=save_pddl, output_path=path).GetFinalTrajectory()
+        if final_trajectory == None:
+            return
 
         goals = [goals1, goals2]
-
-        #plotter = Plotter(map, obs, updated_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, final_trajectory, output_path=path, save_img=save_imgs, save_gif=save_gifs, show_anim=show_animation)
-        plotter = Plotter(map, obs, updated_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, output_path=path, save_img=save_imgs, save_gif=save_gifs, show_anim=show_animation)
-        
+        plotter = Plotter(map, obs, updated_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, final_trajectory, output_path=path, save_img=save_imgs, save_gif=save_gifs, show_anim=show_animation)
         if show_animation or show_knn or save_gifs: 
             plotter.plot_init()
             plotter.plot_PRM()
@@ -202,7 +199,7 @@ def main():
             plotter.Visualize_Final_Graph()
         else:
             plotter.plot4()
-        #plotter.plot_final()
+        plotter.plot_final()
 
     if show_arm:
         Arm_Run(output_path=path, save_img=save_imgs, save_gif=save_gifs, show_anim=show_animation)
@@ -215,7 +212,7 @@ def options():
     parser.add_argument("-arm", dest='arm', required=False, default="True", help="Run the arm simulation")
     parser.add_argument("-n", dest='n', required=False, default=[2, 7, 9, 12,15], help="Table Numbers that are goals to create")
     parser.add_argument("-o", dest='o', required=False, default = 4, help="Number of obstacles to create")
-    parser.add_argument("-s", dest='s', required=False, default = 150, help="Number of samples for PRM")
+    parser.add_argument("-s", dest='s', required=False, default = 100, help="Number of samples for PRM")
     parser.add_argument("-a", dest='a', required=False, default="False", help="Show animations")
     parser.add_argument("-k", dest='k', required=False, default="False", help="Show the k-nearest neighbors animation")
     parser.add_argument("-p", dest='p', required=False, default="False", help="Save .pddl files")
