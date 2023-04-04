@@ -5,7 +5,7 @@ from Nav_Modules.Nav_Geometry import *
 def Create_Goal_Nodes(goals):
     return [g.Create_Goal_Node(name='G'+str(idx+1)) for idx, g in enumerate(goals)]
 
-def Create_Samples(map, start_node1, start_node2, obstacles, goals1, goals2, N_samples=100, N_knn=5):
+def Create_Samples(map, start_node1, start_node2, obstacles, goals1, goals2, N_samples=100, N_knn=3):
     samples = []
     goals = [goals1, goals2]
     while len(samples) <= N_samples:
@@ -30,7 +30,7 @@ def Create_Samples(map, start_node1, start_node2, obstacles, goals1, goals2, N_s
     goal_nodes2 = Create_Goal_Nodes(goals[1])
     return samples + goal_nodes1 + goal_nodes2, goal_nodes1, goal_nodes2
 
-def Create_Roadmap(samples, obstacles, goals1, goals2, N_knn=5):
+def Create_Roadmap(samples, obstacles, goals1, goals2, N_knn=3):
     """
     Creates the roadmap
     :param samples: list of XY positions of sampled points [m]
@@ -45,6 +45,7 @@ def Create_Roadmap(samples, obstacles, goals1, goals2, N_knn=5):
     r = 2
     PRM_graph = Graph(samples)
 
+    
     moving_obs.append(Obstacle(r, [50, 80]))
     moving_obs.append(Obstacle(r, [20, 50]))
     moving_obs.append(Obstacle(r, [50, 20]))
@@ -81,12 +82,10 @@ def Create_Roadmap(samples, obstacles, goals1, goals2, N_knn=5):
 
                     moving_obs.append(temp)
                 break
-        count = count + 3
-        
+        count = count + 3 
 
     for s in samples:
-        edges = []; 
-        PRM_graph.graph[s] = {}
+        edges = []; PRM_graph.graph[s] = {}
         dists, idx = samples_kd_tree.query(s.center, k=N_sample)       
         for i in range(1,N_sample):
             neighbor = samples[idx[i]]
@@ -110,6 +109,7 @@ def Create_Roadmap(samples, obstacles, goals1, goals2, N_knn=5):
         if len(PRM_graph.graph[s]) < 1:
             print('Not all goal/start nodes could be connected to the roadmap.')
     return roadmap, PRM_graph, moving_obs
+
 
 
 def Astar_Algorithm(PRM_graph, start_node, goal_node, edges):
@@ -166,7 +166,7 @@ def Astar_Algorithm(PRM_graph, start_node, goal_node, edges):
     print(f"\tA* search completed, shortest path has value {path_value:.3f}")
     return path_value, best_path, best_edges
 
-def PRM_Solve(start_nodes, goals1, goals2, samples, goal1_nodes, goal2_nodes, roadmap, PRM_graph, obstacles, updated_obs):
+def PRM_Solve(start_nodes, goals1, goals2, samples, goal1_nodes, goal2_nodes, roadmap, PRM_graph):
     """
     Runs PRM planning algorithm
     """
@@ -188,49 +188,73 @@ def PRM_Solve(start_nodes, goals1, goals2, samples, goal1_nodes, goal2_nodes, ro
             if path_value==None or best_path==None or best_edges==None:
                 pass
             else:
-                new_graph[start_n][g] = {'Value' : path_value, 'Trajectory1' : []}
+                new_graph[start_n][g] = {'Value' : path_value, 'Trajectory' : []}
                 for i in range(len(best_edges)):
-                    new_graph[start_n][g]['Trajectory1'].append(best_path[i])
-                    new_graph[start_n][g]['Trajectory1'].append(best_edges[i])
-                new_graph[start_n][g]['Trajectory1'].append(best_path[-1])
-                trajectories1.append(new_graph[start_n][g]['Trajectory1'])
+                    new_graph[start_n][g]['Trajectory'].append(best_path[i])
+                    new_graph[start_n][g]['Trajectory'].append(best_edges[i])
+                new_graph[start_n][g]['Trajectory'].append(best_path[-1])
+                trajectories1.append(new_graph[start_n][g]['Trajectory'])
             for g2 in goal1_nodes:
                 if not g == g2 and not g in new_graph[g2]:
                     path_value, best_path, best_edges = Astar_Algorithm(PRM_graph, g, g2, roadmap)
                     if path_value==None or best_path==None or best_edges==None:
                         pass
                     else:
-                        new_graph[g][g2] = {'Value' : path_value, 'Trajectory1' : []}
+                        new_graph[g][g2] = {'Value' : path_value, 'Trajectory' : []}
                         for j in range(len(best_edges)):
-                            new_graph[g][g2]['Trajectory1'].append(best_path[j])
-                            new_graph[g][g2]['Trajectory1'].append(best_edges[j])
-                        new_graph[g][g2]['Trajectory1'].append(best_path[-1])
-                        trajectories1.append(new_graph[g][g2]['Trajectory1'])
+                            new_graph[g][g2]['Trajectory'].append(best_path[j])
+                            new_graph[g][g2]['Trajectory'].append(best_edges[j])
+                        new_graph[g][g2]['Trajectory'].append(best_path[-1])
+                        trajectories1.append(new_graph[g][g2]['Trajectory'])
+            for g2 in goal2_nodes:
+                if not g == g2 and not g in new_graph[g2]:
+                    path_value, best_path, best_edges = Astar_Algorithm(PRM_graph, g, g2, roadmap)
+                    if path_value==None or best_path==None or best_edges==None:
+                        pass
+                    else:
+                        new_graph[g][g2] = {'Value' : path_value, 'Trajectory' : []}
+                        for j in range(len(best_edges)):
+                            new_graph[g][g2]['Trajectory'].append(best_path[j])
+                            new_graph[g][g2]['Trajectory'].append(best_edges[j])
+                        new_graph[g][g2]['Trajectory'].append(best_path[-1])
+                        trajectories1.append(new_graph[g][g2]['Trajectory'])
         
         for g in goal2_nodes:
                 path_value, best_path, best_edges = Astar_Algorithm(PRM_graph, start_n, g, roadmap)
                 if path_value==None or best_path==None or best_edges==None:
                     pass
                 else:
-                    new_graph[start_n][g] = {'Value' : path_value, 'Trajectory2' : []}
+                    new_graph[start_n][g] = {'Value' : path_value, 'Trajectory' : []}
                     for i in range(len(best_edges)):
-                        new_graph[start_n][g]['Trajectory2'].append(best_path[i])
-                        new_graph[start_n][g]['Trajectory2'].append(best_edges[i])
-                    new_graph[start_n][g]['Trajectory2'].append(best_path[-1])
-                    trajectories2.append(new_graph[start_n][g]['Trajectory2'])
+                        new_graph[start_n][g]['Trajectory'].append(best_path[i])
+                        new_graph[start_n][g]['Trajectory'].append(best_edges[i])
+                    new_graph[start_n][g]['Trajectory'].append(best_path[-1])
+                    trajectories2.append(new_graph[start_n][g]['Trajectory'])
+                for g2 in goal1_nodes:
+                    if not g == g2 and not g in new_graph[g2]:
+                        path_value, best_path, best_edges = Astar_Algorithm(PRM_graph, g, g2, roadmap)
+                        if path_value==None or best_path==None or best_edges==None:
+                            pass
+                        else:
+                            new_graph[g][g2] = {'Value' : path_value, 'Trajectory' : []}
+                            for j in range(len(best_edges)):
+                                new_graph[g][g2]['Trajectory'].append(best_path[j])
+                                new_graph[g][g2]['Trajectory'].append(best_edges[j])
+                            new_graph[g][g2]['Trajectory'].append(best_path[-1])
+                            trajectories2.append(new_graph[g][g2]['Trajectory'])
                 for g2 in goal2_nodes:
                     if not g == g2 and not g in new_graph[g2]:
                         path_value, best_path, best_edges = Astar_Algorithm(PRM_graph, g, g2, roadmap)
                         if path_value==None or best_path==None or best_edges==None:
                             pass
                         else:
-                            new_graph[g][g2] = {'Value' : path_value, 'Trajectory2' : []}
+                            new_graph[g][g2] = {'Value' : path_value, 'Trajectory' : []}
                             for j in range(len(best_edges)):
-                                new_graph[g][g2]['Trajectory2'].append(best_path[j])
-                                new_graph[g][g2]['Trajectory2'].append(best_edges[j])
-                            new_graph[g][g2]['Trajectory2'].append(best_path[-1])
-                            trajectories2.append(new_graph[g][g2]['Trajectory2'])
+                                new_graph[g][g2]['Trajectory'].append(best_path[j])
+                                new_graph[g][g2]['Trajectory'].append(best_edges[j])
+                            new_graph[g][g2]['Trajectory'].append(best_path[-1])
+                            trajectories2.append(new_graph[g][g2]['Trajectory'])
             
     
-    print("Finished running Astar's Algorithm on the PRM, with " + str(len(trajectories1)+len(trajectories2)) + " trajectories found.\n")
+    print("Finished running Astar's Algorithm on the PRM, with " + str(len(trajectories1)) + str(len(trajectories2)) + " trajectories found.\n")
     return new_graph, trajectories1, trajectories2

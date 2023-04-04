@@ -2,12 +2,9 @@ import os, imageio, shutil
 import matplotlib.pyplot as plt
 import networkx as nx
 from Nav_Modules.Nav_Geometry import *
-import time 
 
 class Plotter:
-    #def __init__(self, map, obstacles, moving_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, final_traj, output_path=None, axis=None, save_img=False, save_gif=False, show_anim=True):
-    def __init__(self, map, obstacles, moving_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, output_path="None", axis=None, save_img=True, save_gif=True, show_anim=True):
-   
+    def __init__(self, map, obstacles, moving_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, final_traj, output_path=None, axis=None, save_img=True, save_gif=True, show_anim=True):
         self.map = map
         self.obstacles = obstacles
         self.moving_obs = moving_obs
@@ -19,7 +16,7 @@ class Plotter:
         self.new_graph =  new_graph
         self.trajectories1 = trajectories1
         self.trajectories2 = trajectories2
-        #self.final_traj = final_traj
+        self.final_traj = final_traj
         self.ax = axis
         self.save_img = save_img
         self.save_gif = save_gif
@@ -43,8 +40,8 @@ class Plotter:
             o.plot_circle(axis)
         for g in self.goals:
             g.plot_circle(axis)
-        self.start[0].plot_node(axis, "b")
-        self.start[1].plot_node(axis, "c")
+        self.start[0].plot_node(axis)
+        self.start[1].plot_node(axis)
 
         if self.show_anim:
             plt.show()
@@ -64,6 +61,8 @@ class Plotter:
         # plotting the map, obstacles, and goal zones
         self.map.plot_rectangle(axis)
         for o in self.obstacles:
+            o.plot_circle(axis)
+        for o in self.moving_obs:
             o.plot_circle(axis)
         for g in self.goals:
             g.plot_circle(axis)
@@ -161,8 +160,6 @@ class Plotter:
         for idx_e, e in enumerate(self.roadmap):
             e.plot_edge(axis)
             e.Highlight_Nodes(axis)
-            self.start[0].plot_node(axis, "b")
-            self.start[1].plot_node(axis, "c")
             xlabel_string_new = xlabel_string + ', Edges: ' + str(idx_e+1) + ' / ' + str(len(self.roadmap))
             axis.set_xlabel(xlabel_string_new)
             if len(self.roadmap) < 200:
@@ -236,80 +233,32 @@ class Plotter:
             plt.savefig('Output/Temp_Images/1.png')
 
         count = 0
-        for idx_t, traj in enumerate(self.trajectories2):
-            xlabel_string = 'x [m]       Trajectories: ' + str(idx_t+1) + ' / ' + str(len(self.trajectories2))
-            if idx_t == len(self.trajectories2) - 1:
-                axis.set_xlabel(xlabel_string)# + ', Plotting Complete!')
-            else:
-                axis.set_xlabel(xlabel_string)
-            for ridx, o in enumerate(traj):
-                if isinstance(o,Node):
-                    if not isinstance(o,Start_Node) and not isinstance(o,Goal_Node):
-                        if ridx == 0:
-                            o.plot_node(axis, color='blue')
-                        else:
-                            o.plot_node(axis, color='red')
-                    else:
-                        if isinstance(o,Start_Node):
-                            self.start[0].plot_node(axis, "b")
-                            self.start[1].plot_node(axis, "c")
-                        else:
-                            o.plot_node(axis)
-                elif isinstance(o,Edge):
-                    o.plot_edge(axis, color='green')
-                if self.save_gif:
-                    count += 1
-                    img_list.append('Output/Temp_Images/' + str(1+count) + '2.png')
-                    plt.savefig('Output/Temp_Images/' + str(1+count) + '2.png')
-                if self.show_anim:
-                    plt.pause(0.001)
-
-        if self.save_gif:
-            for j in range(1,15):
-                img_list.append('Output/Temp_Images/' + str(1+count+j) + '2.png')
-                shutil.copyfile('Output/Temp_Images/' + str(1+count) + '2.png', 'Output/Temp_Images/' + str(1+count+j) + '2.png')
-
-        if self.save_img:
-            plt.savefig(self.output_path+'Astar2.png')
-        if self.show_anim:
-            plt.show()
-        if self.save_gif:
-            Create_GIF(img_list, "Astar_Animation2", self.output_path)
-            print("\t...Done Astar robot2")
-            
-        count = 0
         # plotting the solution trajectories (including the start and goal nodes)
         for idx_t, traj in enumerate(self.trajectories1):
             xlabel_string = 'x [m]       Trajectories: ' + str(idx_t+1) + ' / ' + str(len(self.trajectories1))
             if idx_t == len(self.trajectories1) - 1:
-                axis.set_xlabel(xlabel_string)# + ', Plotting Complete!')
+                axis.set_xlabel(xlabel_string)# + ', Plotting Complete!') 
             else:
                 axis.set_xlabel(xlabel_string)
-            for ridx, o in enumerate(traj):
+            for o in traj:
                 if isinstance(o,Node):
                     if not isinstance(o,Start_Node) and not isinstance(o,Goal_Node):
-                        if ridx == 0:
-                            o.plot_node(axis, color='blue')
-                        else:
-                            o.plot_node(axis, color='red')
+                        o.plot_node(axis, color='yellow')
                     else:
-                        if isinstance(o,Start_Node):
-                            self.start[0].plot_node(axis, "b")
-                            self.start[1].plot_node(axis, "c")
-                        else:
-                            o.plot_node(axis)
+                        o.plot_node(axis)
                 elif isinstance(o,Edge):
-                    o.plot_edge(axis, color='green')
+                    o.plot_edge(axis, color='yellow')
                 if self.save_gif:
                     count += 1
-                    img_list.append('Output/Temp_Images/' + str(1+count) + '1.png')
-                    plt.savefig('Output/Temp_Images/' + str(1+count) + '1.png')
+                    img_list.append('Output/Temp_Images/' + str(1+count) + '.png')
+                    plt.savefig('Output/Temp_Images/' + str(1+count) + '.png')
                 if self.show_anim:
                     plt.pause(0.001)
+        
         if self.save_gif:
             for j in range(1,15):
-                img_list.append('Output/Temp_Images/' + str(1+count+j) + '1.png')
-                shutil.copyfile('Output/Temp_Images/' + str(1+count) + '1.png', 'Output/Temp_Images/' + str(1+count+j) + '1.png')
+                img_list.append('Output/Temp_Images/' + str(1+count+j) + '.png')
+                shutil.copyfile('Output/Temp_Images/' + str(1+count) + '.png', 'Output/Temp_Images/' + str(1+count+j) + '.png')
 
         if self.save_img:
             plt.savefig(self.output_path+'Astar.png')
@@ -317,11 +266,45 @@ class Plotter:
             plt.show()
         if self.save_gif:
             Create_GIF(img_list, "Astar_Animation", self.output_path)
-            print("\t...Done Astar robot 1")
-
+            print("\t...Done")
         
-        return
+        count = 0
+        # plotting the solution trajectories (including the start and goal nodes)
+        for idx_t, traj in enumerate(self.trajectories2):
+            xlabel_string = 'x [m]       Trajectories: ' + str(idx_t+1) + ' / ' + str(len(self.trajectories2))
+            if idx_t == len(self.trajectories2) - 1:
+                axis.set_xlabel(xlabel_string)# + ', Plotting Complete!') 
+            else:
+                axis.set_xlabel(xlabel_string)
+            for o in traj:
+                if isinstance(o,Node):
+                    if not isinstance(o,Start_Node) and not isinstance(o,Goal_Node):
+                        o.plot_node(axis, color='yellow')
+                    else:
+                        o.plot_node(axis)
+                elif isinstance(o,Edge):
+                    o.plot_edge(axis, color='yellow')
+                if self.save_gif:
+                    count += 1
+                    img_list.append('Output/Temp_Images/' + str(1+count) + '.png')
+                    plt.savefig('Output/Temp_Images/' + str(1+count) + '.png')
+                if self.show_anim:
+                    plt.pause(0.001)
+        
+        if self.save_gif:
+            for j in range(1,15):
+                img_list.append('Output/Temp_Images/' + str(1+count+j) + '.png')
+                shutil.copyfile('Output/Temp_Images/' + str(1+count) + '.png', 'Output/Temp_Images/' + str(1+count+j) + '.png')
 
+        if self.save_img:
+            plt.savefig(self.output_path+'Astar.png')
+        if self.show_anim:
+            plt.show()
+        if self.save_gif:
+            Create_GIF(img_list, "Astar_Animation", self.output_path)
+            print("\t...Done")
+
+        return
 
     def Visualize_Final_Graph(self, axis=None):
         """
@@ -373,7 +356,6 @@ class Plotter:
 
         plt.show()
         return
-
 
     def plot_final(self):
         """
@@ -462,8 +444,7 @@ class Plotter:
             print("\t...Done\n")
         plt.show()
         return
-
-
+    
 def Create_GIF(img_list, name, output_path):
     """
     Creates a .gif animation from a list of image files (.png)
