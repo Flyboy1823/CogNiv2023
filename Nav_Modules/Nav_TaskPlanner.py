@@ -185,8 +185,10 @@ class TaskPlanner:
             result = planner.solve(problem)
             plan = result.plan
             if plan is not None:
-                print("Optimal Fast Downward Planner returned the following plan:")
-                print('\t'+str(plan))
+                for i in range(len(plan.actions)):
+                    robot = plan.actions[i].actual_parameters[0]  # get robot name from action argument
+                    action = plan.actions[i].actual_parameters[1:]
+                    print('\tRobot {} will perform action {}'.format(robot, action))
             else:
                 print("No plan was found")
         return plan
