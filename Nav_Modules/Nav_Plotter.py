@@ -2,6 +2,9 @@ import os, imageio, shutil
 import matplotlib.pyplot as plt
 import networkx as nx
 from Nav_Modules.Nav_Geometry import *
+import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
+import matplotlib.lines as mlines
 
 class Plotter:
     def __init__(self, map, obstacles, moving_obs, goals, start, samples, roadmap, PRM_graph, new_graph, trajectories1, trajectories2, final_traj, output_path=None, axis=None, save_img=False, save_gif=False):
@@ -42,6 +45,11 @@ class Plotter:
         self.start[0].plot_node(axis)
         self.start[1].plot_node(axis)
 
+        # add a legend
+        obstacle_patch = mpatches.Patch(color='orange', label='Obstacle')
+        goal_patch = mpatches.Patch(color='green', label='Goal')
+        start_patch = mpatches.Patch(color='blue', label='Starting point')
+        plt.legend(handles=[obstacle_patch, goal_patch, start_patch])
 
         plt.show()
         if self.save_img:
@@ -97,6 +105,13 @@ class Plotter:
             plt.pause(0.001)
 
 
+        # create legend patches
+        yellow_patch = mpatches.Patch(color='yellow', label='kNN node')
+        orange_patch = mpatches.Patch(color='orange', label='kNN neighbor')
+
+        # add legend to the plot
+        plt.legend(handles=[yellow_patch, orange_patch])
+
         plt.show()
         if self.save_gif:
             for j in range(0,10):
@@ -125,6 +140,14 @@ class Plotter:
             o.plot_circle(axis)
         for g in self.goals:
             g.plot_circle(axis)
+
+        # Add legend
+        legend_elements = [Line2D([0], [0], marker='o', color='w', label='Sample Node', markerfacecolor='g', markersize=10),
+                        Line2D([0], [0], marker='o', color='w', label='Goal Node', markerfacecolor='c', markersize=10),
+                        Line2D([0], [0], marker='o', color='w', label='Obstacle', markerfacecolor='orange', markersize=10),
+                        Line2D([0], [0], marker='o', color='w', label='Moving Obstacle', markerfacecolor='k', markersize=10)]
+        axis.legend(handles=legend_elements, loc='upper right')
+
 
         if self.save_gif:
             print("Producing PRM animation .gif...")
@@ -287,6 +310,11 @@ class Plotter:
 
                 plt.pause(0.001)
         
+        # add legend to the plot
+        yellow_line = mlines.Line2D([], [], color='yellow', label='Shortest path')
+        blue_line = mlines.Line2D([], [], color='blue', label='Alternative path')
+        axis.legend(handles=[yellow_line, blue_line])
+
         if self.save_gif:
             for j in range(1,15):
                 img_list.append('Output/Temp_Images/' + str(1+count+j) + '.png')
@@ -323,6 +351,8 @@ class Plotter:
         nx.draw_networkx_edge_labels(G,pos,ax=axis,edge_labels=labels)
 
         axis.set_title('Simplified Graph')
+        yellow_line = mlines.Line2D([], [], color='yellow', label='Path weight')
+        plt.legend(handles=[yellow_line])
 
         plt.show()
         if self.save_img:
@@ -437,6 +467,18 @@ class Plotter:
                 shutil.copyfile('Output/Temp_Images/' + str(node_count) + '.png', 'Output/Temp_Images/' + str(node_count+j) + '.png')
             Create_GIF(img_list, "Final_Trajectory_Animation", self.output_path)
             print("\t...Done\n")
+        
+        legend_elements = [Line2D([0], [0], marker='o', color='w', label='Start Node',
+                          markerfacecolor='blue', markersize=10),
+                   Line2D([0], [0], marker='o', color='w', label='Goal Node',
+                          markerfacecolor='green', markersize=10),
+                   Line2D([0], [0], marker='o', color='red', label='Forward Trajectory',
+                          markerfacecolor='red', markersize=10),
+                   Line2D([0], [0], marker='o', color='purple', label='Backward Trajectory',
+                          markerfacecolor='purple', markersize=10)]
+        axis.legend(handles=legend_elements, loc='upper right')
+
+
         plt.show()
         return
     
